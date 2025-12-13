@@ -1,31 +1,50 @@
 # Project Context
 
 ## Purpose
-[Describe your project's purpose and goals]
+Simple web server for VPS health monitoring that provides HTTP 200 responses with detailed logging for security and monitoring purposes.
 
 ## Tech Stack
-- [List your primary technologies]
-- [e.g., TypeScript, React, Node.js]
+- Go - Single binary, low memory footprint
+- Systemd - Service management on Ubuntu VPS
+- Standard Library HTTP server - Minimal dependencies, secure by default
 
 ## Project Conventions
 
 ### Code Style
-[Describe your code style preferences, formatting rules, and naming conventions]
+- Go standard formatting (gofmt)
+- Minimal dependencies principle
+- Security-first approach with input validation
+- Structured JSON logging for system integration
 
 ### Architecture Patterns
-[Document your architectural decisions and patterns]
+- Single-purpose microservice design
+- Stateless operation for reliability
+- Graceful shutdown handling
+- Rate limiting for abuse prevention
 
 ### Testing Strategy
-[Explain your testing approach and requirements]
+- Unit tests for core functionality
+- Integration tests for HTTP endpoints
+- Security testing for input validation
+- Load testing for rate limiting
 
 ### Git Workflow
-[Describe your branching strategy and commit conventions]
+- Feature branches for new capabilities
+- Change proposals via OpenSpec process
+- Semantic versioning for releases
 
 ## Domain Context
-[Add domain-specific knowledge that AI assistants need to understand]
+VPS health monitoring server designed for Ubuntu environments. The server provides a simple HTTP endpoint that monitoring systems can ping to verify VPS availability and responsiveness.
 
 ## Important Constraints
-[List any technical, business, or regulatory constraints]
+- Must run on Ubuntu VPS with systemd
+- Port 8001 must be available and not blocked by firewall
+- Memory usage should be minimal (< 50MB)
+- No external dependencies beyond Go standard library
+- Must be secure against common web attacks
 
 ## External Dependencies
-[Document key external services, APIs, or systems]
+- systemd for service management
+- Ubuntu firewall (ufw) configuration
+- systemd journal for logging
+- Monitoring systems that will ping the health endpoint
