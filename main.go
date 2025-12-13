@@ -115,7 +115,8 @@ func (l *Logger) log(level, message string, fields map[string]string) {
 		return
 	}
 	
-	fmt.Println(string(jsonEntry))
+	// Write to stderr for systemd journal capture
+	fmt.Fprintln(os.Stderr, string(jsonEntry))
 }
 
 // sanitizeInput sanitizes input to prevent injection
@@ -191,7 +192,7 @@ func healthCheckHandler(logger *Logger, rateLimiter *RateLimiter) http.HandlerFu
 		// Sanitize user agent
 		userAgent := sanitizeInput(r.Header.Get("User-Agent"))
 		
-		// Set security headers
+		// Set security headers BEFORE writing status
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("X-XSS-Protection", "1; mode=block")

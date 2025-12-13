@@ -1,0 +1,45 @@
+[Unit]
+Description=Health Check Web Server
+Documentation=https://github.com/your-org/health-check-server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=healthcheck
+Group=healthcheck
+ExecStart=/usr/local/bin/health-check-server
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=health-check-server
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/health-check-server
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+PrivateDevices=true
+ProtectKernelLogs=true
+ProtectClock=true
+
+# Network settings
+IPAddressDeny=any
+IPAddressAllow=localhost
+IPAddressAllow=::1
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=50M
+CPUQuota=10%
+
+[Install]
+WantedBy=multi-user.target

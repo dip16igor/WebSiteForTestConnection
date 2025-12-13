@@ -48,6 +48,12 @@ A complete, secure, and production-ready health check web server has been implem
   - Sets up firewall rules
   - Tests the deployment
 
+- **[`fix-deployment.sh`](fix-deployment.sh)** - Fix script that addresses:
+  - Logging issues (redirects to stderr for systemd)
+  - Security header verification
+  - Service restart and testing
+  - Rate limiting validation
+
 - **[`test.sh`](test.sh)** - Comprehensive test suite that validates:
   - Basic functionality
   - Security headers
@@ -83,7 +89,14 @@ A complete, secure, and production-ready health check web server has been implem
    sudo ./deploy.sh
    ```
 
-3. **Verify deployment**
+3. **Apply fixes (if needed)**
+   ```bash
+   # If tests show issues with headers or logging
+   sudo chmod +x fix-deployment.sh
+   sudo ./fix-deployment.sh
+   ```
+
+4. **Verify deployment**
    ```bash
    # Test the service
    curl http://localhost:8001
@@ -95,7 +108,7 @@ A complete, secure, and production-ready health check web server has been implem
    sudo journalctl -u health-check-server -f
    ```
 
-4. **Run comprehensive tests**
+5. **Run comprehensive tests**
    ```bash
    sudo chmod +x test.sh
    ./test.sh
