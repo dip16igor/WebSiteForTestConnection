@@ -102,7 +102,8 @@ type MQTTConfig struct {
 
 // Config holds application configuration
 type Config struct {
-	MQTT MQTTConfig `yaml:"mqtt"`
+	MQTT  MQTTConfig  `yaml:"mqtt"`
+	MQTT2 *MQTTConfig `yaml:"mqtt2,omitempty"`
 }
 
 // MQTTClient wraps Paho MQTT client
@@ -178,7 +179,7 @@ func loadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
-	// Validate required fields
+	// Validate required fields for first MQTT broker
 	if config.MQTT.Broker == "" {
 		return nil, fmt.Errorf("mqtt.broker is required")
 	}
@@ -194,6 +195,17 @@ func loadConfig(path string) (*Config, error) {
 	}
 	if _, ok := config.MQTT.Gates["gate2"]; !ok {
 		return nil, fmt.Errorf("mqtt.gates.gate2 is required")
+	}
+
+	// Validate second MQTT broker if configured (optional)
+	if config.MQTT2 != nil {
+		if config.MQTT2.Broker == "" {
+			return nil, fmt.Errorf("mqtt2.broker is required when mqtt2 is configured")
+		}
+		if config.MQTT2.ClientID == "" {
+			return nil, fmt.Errorf("mqtt2.client_id is required when mqtt2 is configured")
+		}
+		// Username and password are optional for second broker too
 	}
 
 	return &config, nil
@@ -496,6 +508,109 @@ func mqttPublishHandler(logger *Logger, rateLimiter *RateLimiter, mqttClient *MQ
 	}
 }
 
+// actionPublishHandler handles the action publish endpoint for second MQTT broker
+func actionPublishHandler(logger *Logger, rateLimiter *RateLimiter, mqtt2Client *MQTTClient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+
+		// Only allow GET requests
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			logger.Error("Action publish: Method not allowed", map[string]string{
+				"method": r.Method,
+				"ip":     getClientIP(r),
+			})
+			return
+		}
+
+		clientIP := getClientIP(r)
+
+		// Check rate limiting
+		if !rateLimiter.IsAllowed(clientIP) {
+			w.WriteHeader(http.StatusTooManyRequests)
+			logger.Error("Action publish: Rate limit exceeded", map[string]string{
+				"ip": clientIP,
+			})
+			return
+		}
+
+		// Parse action value from query parameter
+		action := r.URL.Query().Get("action")
+		if action == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			logger.Error("Action publish: Missing action parameter", map[string]string{
+				"ip": clientIP,
+			})
+			return
+		}
+
+		// Validate action value
+		if action != "vol+" && action != "vol-" {
+			w.WriteHeader(http.StatusBadRequest)
+			logger.Error("Action publish: Invalid action value", map[string]string{
+				"ip":     clientIP,
+				"action": action,
+			})
+			return
+		}
+
+		// Fixed topic for WebRadio2
+		topic := "Home/WebRadio2/Action"
+
+		// Debug log before MQTT publish
+		logger.Info("Action publish: Attempting to publish", map[string]string{
+			"ip":     clientIP,
+			"action": action,
+			"topic":  topic,
+		})
+
+		// Publish to MQTT2 with action as payload
+		var publishErr error
+		if mqtt2Client != nil {
+			publishErr = mqtt2Client.Publish(topic, action)
+		} else {
+			publishErr = fmt.Errorf("second MQTT broker not configured")
+		}
+
+		if publishErr != nil {
+			// Log error but still respond with OK (best effort)
+			logger.Error("Action publish: Failed to publish message", map[string]string{
+				"ip":     clientIP,
+				"action": action,
+				"topic":  topic,
+				"error":  publishErr.Error(),
+			})
+		} else {
+			logger.Info("Action message published", map[string]string{
+				"ip":     clientIP,
+				"action": action,
+				"topic":  topic,
+			})
+		}
+
+		// Set security headers BEFORE writing status
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+		// Send response
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "OK")
+
+		// Calculate response time
+		responseTime := time.Since(startTime).Milliseconds()
+
+		// Log the request
+		logger.Info("Action publish request processed", map[string]string{
+			"ip":            clientIP,
+			"action":        action,
+			"topic":         topic,
+			"response_time": fmt.Sprintf("%d", responseTime),
+		})
+	}
+}
+
 func main() {
 	logger := NewLogger("health-check-server")
 	rateLimiter := NewRateLimiter(10, time.Minute) // 10 requests per minute per IP
@@ -509,10 +624,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Initialize MQTT client
+	// Initialize first MQTT client
 	mqttClient := NewMQTTClient(&config.MQTT, logger)
 
-	// Connect to MQTT broker
+	// Connect to first MQTT broker
 	if err := mqttClient.Connect(); err != nil {
 		logger.Error("Failed to connect to MQTT broker", map[string]string{
 			"error": err.Error(),
@@ -520,10 +635,31 @@ func main() {
 		// Continue running even if MQTT connection fails (best effort)
 	}
 
+	// Initialize second MQTT client if configured
+	var mqtt2Client *MQTTClient
+	if config.MQTT2 != nil {
+		mqtt2Client = NewMQTTClient(config.MQTT2, logger)
+		// Connect to second MQTT broker
+		if err := mqtt2Client.Connect(); err != nil {
+			logger.Error("Failed to connect to second MQTT broker", map[string]string{
+				"error": err.Error(),
+			})
+			// Continue running even if second MQTT connection fails (best effort)
+			mqtt2Client = nil
+		} else {
+			logger.Info("Second MQTT broker connected", map[string]string{
+				"broker": config.MQTT2.Broker,
+			})
+		}
+	} else {
+		logger.Info("Second MQTT broker not configured", nil)
+	}
+
 	// Create HTTP server with timeouts
 	mux := http.NewServeMux()
 	mux.Handle("/", healthCheckHandler(logger, rateLimiter))
 	mux.Handle("/mqtt", mqttPublishHandler(logger, rateLimiter, mqttClient))
+	mux.Handle("/action", actionPublishHandler(logger, rateLimiter, mqtt2Client))
 
 	server := &http.Server{
 		Addr:         ":8001",
@@ -551,8 +687,11 @@ func main() {
 
 	logger.Info("Shutting down health check server", nil)
 
-	// Disconnect MQTT client
+	// Disconnect MQTT clients
 	mqttClient.Disconnect()
+	if mqtt2Client != nil {
+		mqtt2Client.Disconnect()
+	}
 
 	// Create a deadline for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

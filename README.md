@@ -1,11 +1,12 @@
 # Health Check Server
 
-A lightweight, secure web server for VPS health monitoring with MQTT integration. Responds with HTTP 200 status on port 8001 and can publish messages to MQTT broker.
+A lightweight, secure web server for VPS health monitoring with MQTT integration. Responds with HTTP 200 status on port 8001 and can publish messages to MQTT broker(s).
 
 ## Features
 
 - **Simple HTTP Endpoint**: Responds with HTTP 200 OK and "OK" body
-- **MQTT Integration**: Publish messages to MQTT broker via HTTP endpoint
+- **MQTT Integration**: Publish messages to MQTT broker(s) via HTTP endpoints
+- **Dual MQTT Broker Support**: Optional second MQTT broker for independent systems
 - **Detailed Logging**: Logs IP addresses, user agents, and response times in structured JSON format
 - **Security Hardened**: Rate limiting, security headers, input validation
 - **Systemd Integration**: Runs as a systemd service with proper process management
@@ -81,6 +82,16 @@ curl "http://localhost:8001/mqtt?gate=gate1"
 
 # Test with gate2
 curl "http://localhost:8001/mqtt?gate=gate2"
+
+# Should return: OK
+
+# Test action endpoint (second MQTT broker)
+curl "http://localhost:8001/action?action=vol+"
+
+# Should return: OK
+
+# Test action endpoint with vol-
+curl "http://localhost:8001/action?action=vol-"
 
 # Should return: OK
 
