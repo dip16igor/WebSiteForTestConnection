@@ -36,14 +36,14 @@ mqtt:
 # Remove this section if not using a second broker
 mqtt2:
   # MQTT broker address (tcp://hostname:port)
-  broker: "tcp://your-second-broker.example.com:1883"
+  broker: "tcp://46.8.233.146:1883"
   
   # MQTT client ID (must be unique)
   client_id: "IgorSmartWatch-WebRadio2"
   
-  # Authentication credentials (optional)
-  username: ""
-  password: ""
+  # Authentication credentials
+  username: "dip16"
+  password: "nirvana7"
   
   # Quality of Service level (0, 1, or 2)
   qos: 1
