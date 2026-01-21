@@ -1,0 +1,31 @@
+# MQTT Configuration for Health Check Server
+# Copy this file to config.yaml and update with your MQTT broker settings
+
+mqtt:
+  # MQTT broker address (tcp://hostname:port)
+  broker: "tcp://192.168.1.100:1883"
+  
+  # MQTT client ID (must be unique)
+  client_id: "health-check-server"
+  
+  # Authentication credentials
+  username: "user"
+  password: "password"
+  
+  # Quality of Service level (0, 1, or 2)
+  qos: 1
+  
+  # Whether to retain messages on the broker
+  retain: false
+  
+  # Connection timeout in seconds
+  connect_timeout: 10
+  
+  # Gate configuration: topic and payload for each gate value
+  gates:
+    gate1:
+      topic: "home/gates/gate1"
+      payload: "123456"
+    gate2:
+      topic: "home2/gates/gate"
+      payload: "37462ацуа767"

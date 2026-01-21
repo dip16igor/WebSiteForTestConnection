@@ -1,0 +1,1 @@
+{"mcpServers":{"ssh-vps":{"command":"npx","args":["-y","@idletoaster/ssh-mcp-server"],"env":{"SSH_CONFIG_PATH":"C:/Users/dip16/.ssh/config"},"alwaysAllow":["remote-ssh","ssh-edit-block","ssh-read-lines","ssh-search-code","ssh-write-chunk"]}}}

@@ -1,0 +1,32 @@
+# MQTT Configuration for Health Check Server
+# Copy this file to /etc/health-check-server/config.yaml on your VPS
+
+mqtt:
+  # MQTT broker address (tcp://hostname:port)
+  broker: "tcp://78.29.40.170:1883"
+  
+  # MQTT client ID (must be unique)
+  client_id: "IgorSmartWatch"
+  
+  # Authentication credentials (not used in this configuration)
+  username: ""
+  password: ""
+  
+  # Quality of Service level (0, 1, or 2)
+  qos: 1
+  
+  # Whether to retain messages on the broker
+  retain: false
+  
+  # Connection timeout in seconds
+  connect_timeout: 10
+  
+  # Gate configuration: topic and payload for each gate value
+  # All gates publish to the same topic: GateControl/Gate
+  gates:
+    gate1:
+      topic: "GateControl/Gate"
+      payload: "179226315200"
+    gate2:
+      topic: "GateControl/Gate"
+      payload: "279226315200"

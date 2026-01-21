@@ -1,12 +1,14 @@
 # Project Context
 
 ## Purpose
-Simple web server for VPS health monitoring that provides HTTP 200 responses with detailed logging for security and monitoring purposes.
+Simple web server for VPS health monitoring with MQTT integration. Provides HTTP 200 responses for health checks and publishes messages to MQTT broker for IoT system integration, with detailed logging for security and monitoring purposes.
 
 ## Tech Stack
 - Go - Single binary, low memory footprint
 - Systemd - Service management on Ubuntu VPS
 - Standard Library HTTP server - Minimal dependencies, secure by default
+- Eclipse Paho MQTT Go Client - MQTT broker integration for IoT systems
+- YAML configuration - Flexible configuration management
 
 ## Project Conventions
 

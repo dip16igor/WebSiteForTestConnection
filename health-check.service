@@ -8,6 +8,7 @@ Wants=network.target
 Type=simple
 User=healthcheck
 Group=healthcheck
+WorkingDirectory=/etc/health-check-server
 ExecStart=/usr/local/bin/health-check-server
 Restart=always
 RestartSec=5
@@ -20,7 +21,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/log/health-check-server
+ReadWritePaths=/etc/health-check-server /var/log/health-check-server
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
@@ -31,10 +32,12 @@ PrivateDevices=true
 ProtectKernelLogs=true
 ProtectClock=true
 
-# Network settings
+# Network settings - allow outbound MQTT connections
+# Note: Update IPAddressAllow if your MQTT broker is on a specific network
 IPAddressDeny=any
-IPAddressAllow=localhost
-IPAddressAllow=::1
+IPAddressAllow=localhost/128 127.0.0.1/32
+# Uncomment and add your MQTT broker IP if needed:
+# IPAddressAllow=192.168.1.0/24
 
 # Resource limits
 LimitNOFILE=65536
