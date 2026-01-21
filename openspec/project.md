@@ -36,17 +36,23 @@ Simple web server for VPS health monitoring with MQTT integration. Provides HTTP
 - Semantic versioning for releases
 
 ## Domain Context
-VPS health monitoring server designed for Ubuntu environments. The server provides a simple HTTP endpoint that monitoring systems can ping to verify VPS availability and responsiveness.
+VPS health monitoring server with MQTT integration designed for Ubuntu environments. The server provides:
+- HTTP health check endpoint for monitoring systems
+- MQTT publish endpoint for IoT system integration
+- Gate control functionality via MQTT topic publishing
 
 ## Important Constraints
 - Must run on Ubuntu VPS with systemd
 - Port 8001 must be available and not blocked by firewall
 - Memory usage should be minimal (< 50MB)
-- No external dependencies beyond Go standard library
+- MQTT broker connectivity required for publish functionality
 - Must be secure against common web attacks
+- Configuration file (config.yaml) must be present and valid
 
 ## External Dependencies
 - systemd for service management
 - Ubuntu firewall (ufw) configuration
 - systemd journal for logging
-- Monitoring systems that will ping the health endpoint
+- Monitoring systems that will ping health endpoint
+- MQTT broker (e.g., Mosquitto) for message publishing
+- Configuration file at /etc/health-check-server/config.yaml
