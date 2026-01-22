@@ -535,6 +535,7 @@ func actionPublishHandler(logger *Logger, rateLimiter *RateLimiter, mqtt2Client 
 		}
 
 		// Parse action value from query parameter
+		// Note: URL.Query() automatically decodes + to space, so we need to handle both cases
 		action := r.URL.Query().Get("action")
 		if action == "" {
 			w.WriteHeader(http.StatusBadRequest)
@@ -545,13 +546,19 @@ func actionPublishHandler(logger *Logger, rateLimiter *RateLimiter, mqtt2Client 
 		}
 
 		// Validate action value
-		if action != "vol+" && action != "vol-" {
+		// Accept both "vol+" and "vol " (space, from URL-decoded +)
+		if action != "vol+" && action != "vol-" && action != "vol " && action != "vol " {
 			w.WriteHeader(http.StatusBadRequest)
 			logger.Error("Action publish: Invalid action value", map[string]string{
 				"ip":     clientIP,
 				"action": action,
 			})
 			return
+		}
+
+		// Normalize action: convert space back to + if it was URL-decoded
+		if action == "vol " {
+			action = "vol+"
 		}
 
 		// Fixed topic for WebRadio2
